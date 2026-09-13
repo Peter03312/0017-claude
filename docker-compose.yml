@@ -1,0 +1,26 @@
+name: belltune
+
+services:
+  api:
+    build: .
+    image: belltune-api
+    ports:
+      - "${API_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+      start_period: 5s
+
+  # One-shot acceptance service: runs the checks once and exits.
+  #   docker compose up --exit-code-from verify verify
+  verify:
+    image: belltune-api
+    command: ["verify"]
+    environment:
+      API_URL: http://api:8080
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: "no"
